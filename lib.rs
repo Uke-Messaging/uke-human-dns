@@ -16,7 +16,7 @@ mod uke_human_dns {
         from: AccountId,
     }
 
-    /// Emitted whenever an address changes.
+    /// Emitted whenever a username gets updated
     #[ink(event)]
     pub struct EditUsername {
         #[ink(topic)]
@@ -27,14 +27,23 @@ mod uke_human_dns {
         from: AccountId,
     }
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
+    /// Uke Human DNS ink! Smart Contract.  
+    /// 
+    /// Used to keep a registry of hash representations of human-readable usernames to AccountIds using ink!.
+    /// 
+    /// # Description
+    ///
+    /// Utilizes ink! to map cryptographic addresses to more human readable names, just like a DNS. 
+    /// Coined the Human DNS, it essentially maps unique, human readable ids to otherwise illegible addresses via a hash.
+    /// With this mapping of addresses, client-side implementations can then look up other users and add them to their contacts, 
+    /// or write them a new message, or any other package of data in theory.
+
     #[ink(storage)]
     #[derive(SpreadAllocate)]
     pub struct UkeHumanDns {
-        /// User mapping of AccountIds to Strings
+        /// User mapping of username hashes to accounts.
         username_to_id: Mapping<Hash, AccountId>,
+        /// Default address of the contract.
         default_address: AccountId,
     }
 
@@ -52,8 +61,9 @@ mod uke_human_dns {
     pub type Result<T> = core::result::Result<T, Error>;
 
     impl UkeHumanDns {
-        /// Constructor that initializes the initial mapping and default address of the contract.
         #[ink(constructor)]
+
+        /// Creates a new human dns contract
         pub fn new() -> Self {
             ink_lang::utils::initialize_contract(|contract: &mut Self| {
                 contract.default_address = Default::default();
@@ -66,7 +76,7 @@ mod uke_human_dns {
             self.get_address_or_default(name)
         }
 
-        /// Register a new username to the mapping
+        /// Register a new username to the mapping.
         #[ink(message)]
         pub fn register(&mut self, name: Hash) -> Result<()> {
             let caller = self.env().caller();
@@ -80,7 +90,7 @@ mod uke_human_dns {
             Ok(())
         }
 
-        /// Edit an existing username
+        /// Edit an existing username.
         #[ink(message)]
         pub fn edit_username(&mut self, old_name: Hash, new_name: Hash) -> Result<()> {
             let caller = self.env().caller();
@@ -109,15 +119,10 @@ mod uke_human_dns {
         }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
     #[cfg(test)]
     mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
 
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
+        use super::*;
         use ink_lang as ink;
 
         fn set_next_caller(caller: AccountId) {
@@ -128,7 +133,6 @@ mod uke_human_dns {
             ink_env::test::default_accounts::<Environment>()
         }
 
-        /// We test if the default constructor does its job.
         #[ink::test]
         fn default_works() {
             let uke_human_dns = UkeHumanDns::new();
@@ -163,7 +167,6 @@ mod uke_human_dns {
 
         #[ink::test]
         fn get_address_works() {
-
             let default_accounts = default_accounts();
             let name = Hash::from([0x01; 32]);
 
